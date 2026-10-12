@@ -100,6 +100,7 @@ There is **no world total**: countries were surveyed in different years (1992 to
 | `data/map.js` | generated once by `scripts/build_map.py`: country shapes for the map |
 | `flags/` | one flag per country, generated once by `scripts/build_flags.py` |
 | `scripts/i18n_check.py` | lists the page's text and checks each translation for gaps |
+| `scripts/stamp.py` | adds version stamps to script and stylesheet addresses, so visitors never get a stale mix. Run after editing css/js/data |
 | `scripts/update_data.py` | fetches survey data, inflation and rates |
 | `scripts/update_rates.py` | fetches exchange rates only |
 | `scripts/countries.py` | country names, continents and currencies. Edit when a country changes currency. |

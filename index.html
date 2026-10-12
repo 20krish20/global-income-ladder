@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/styles.css?v=2b9f2724">
 <script id="theme-boot">try { var t = new URLSearchParams(location.search).get("theme") || localStorage.getItem("gil:theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
@@ -53,161 +53,177 @@
     <ol class="key" id="key"></ol>
   </section>
 
-  <section class="howto" aria-labelledby="howtoTitle">
-    <h2 id="howtoTitle" data-i18n>How to read this page</h2>
-    <ol class="howto-steps">
-      <li>
-        <div class="howto-fig" aria-hidden="true">
-          <span class="howto-row"><span class="howto-name" id="howName"></span><span class="stack" id="howBar"></span></span>
-          <span class="howto-ends"><span data-i18n>← poorest</span><span data-i18n>richest →</span></span>
+
+
+
+
+  <nav class="tabs" role="tablist" aria-label="Sections" data-i18n-attr="aria-label">
+    <button type="button" role="tab" id="tab-countries" aria-controls="panel-countries" aria-selected="true" data-tab="countries" data-i18n>Countries</button>
+    <button type="button" role="tab" id="tab-stand" aria-controls="panel-stand" aria-selected="false" data-tab="stand" data-i18n>Where do I stand?</button>
+    <button type="button" role="tab" id="tab-map" aria-controls="panel-map" aria-selected="false" data-tab="map" data-i18n>World map</button>
+    <button type="button" role="tab" id="tab-guide" aria-controls="panel-guide" aria-selected="false" data-tab="guide" data-i18n>How to read this</button>
+  </nav>
+
+  <div class="panel" role="tabpanel" id="panel-countries" aria-labelledby="tab-countries">
+    <main class="grid">
+      <section class="sheet" id="sheet" aria-labelledby="sheetName">
+        <div class="pickers">
+          <label class="field"><span data-i18n>Country</span><select id="pick"></select></label>
+          <label class="field"><span data-i18n>Compare with</span><select id="cmp"></select></label>
         </div>
-        <p><b data-i18n>Each bar is everyone in a country.</b> <span data-i18n>People are lined up from the poorest on the left to the richest on the right. A wider block means more people.</span></p>
-      </li>
-      <li>
-        <div class="howto-fig howto-chips" aria-hidden="true">
-          <span><i class="chip red"></i><span id="howRed"></span></span>
-          <span><i class="chip s4"></i><span id="howAmber"></span></span>
-          <span><i class="chip grey"></i><span id="howGrey"></span></span>
+        <div class="sheet-head">
+          <div class="sheet-title">
+            <h2 id="sheetName"></h2>
+            <div class="sheet-actions">
+              <button type="button" class="link-btn" id="btnShare" data-i18n>Share</button>
+              <button type="button" class="link-btn" id="btnEmbed" data-i18n>Embed</button>
+            </div>
+          </div>
+          <p id="sheetMeta"></p>
+          <p id="sheetPrices"></p>
         </div>
-        <p><b data-i18n>Colour shows what people live on.</b> <span data-i18n>Red is the bottom of the ladder, amber is the middle, grey is the top. Darker red is poorer.</span></p>
-      </li>
-      <li>
-        <div class="howto-fig" id="howPair" aria-hidden="true"></div>
-        <p><b data-i18n>More red means more people are poor.</b> <span data-i18n>Pick any country in the list to see its own numbers, in plain words.</span></p>
-      </li>
-    </ol>
-  </section>
-
-  <section class="mapsec" id="mapSec" aria-labelledby="mapTitle" hidden>
-    <div class="sec-head">
-      <h2 id="mapTitle" data-i18n>Where the red is</h2>
-      <p id="mapCap"></p>
-    </div>
-    <div class="map" id="map"></div>
-    <p class="fine" data-i18n>Small island countries are too small to show on the map; find them in the list below. Select a country to open it.</p>
-  </section>
-
-  <section class="stand" id="stand" aria-labelledby="standTitle">
-    <div class="sec-head">
-      <h2 id="standTitle" data-i18n>Where do I stand?</h2>
-      <p data-i18n>Type in your household's income. It is divided by the number of people living on it, the same way the surveys count.</p>
-    </div>
-    <div class="stand-form">
-      <label class="field"><span data-i18n>I live in</span><select id="stCountry"></select></label>
-      <label class="field"><span data-i18n>Household income</span><input id="stAmount" type="number" inputmode="decimal" min="0" step="any" autocomplete="off"></label>
-      <label class="field"><span data-i18n>Per</span>
-        <select id="stPeriod">
-          <option value="day" data-i18n>day</option>
-          <option value="month" selected data-i18n>month</option>
-          <option value="year" data-i18n>year</option>
-        </select>
-      </label>
-      <label class="field"><span data-i18n>Currency</span><select id="stCur"></select></label>
-      <label class="field"><span data-i18n>People in the household</span><input id="stPeople" type="number" inputmode="numeric" min="1" step="1" value="1"></label>
-    </div>
-    <div class="stand-out" id="stOut" aria-live="polite"></div>
-    <p class="fine" data-i18n>Nothing you type leaves your device or is saved.</p>
-  </section>
-
-  <main class="grid">
-    <section class="sheet" id="sheet" aria-labelledby="sheetName">
-      <div class="pickers">
-        <label class="field"><span data-i18n>Country</span><select id="pick"></select></label>
-        <label class="field"><span data-i18n>Compare with</span><select id="cmp"></select></label>
-      </div>
-      <div class="sheet-head">
-        <div class="sheet-title">
-          <h2 id="sheetName"></h2>
-          <div class="sheet-actions">
-            <button type="button" class="link-btn" id="btnShare" data-i18n>Share</button>
-            <button type="button" class="link-btn" id="btnEmbed" data-i18n>Embed</button>
+        <div class="say" id="say">
+          <p class="say-main" id="sayMain"></p>
+          <p class="say-sub" id="saySub"></p>
+        </div>
+        <div class="sheet-cur" id="sheetCur">
+          <span class="ctl-label" id="sheetCurLabel" data-i18n>Show this country in</span>
+          <div class="seg-ctl" role="group" aria-labelledby="sheetCurLabel">
+            <button type="button" id="cur-global" data-local="0" aria-pressed="true"></button>
+            <button type="button" id="cur-local" data-local="1" aria-pressed="false"></button>
           </div>
         </div>
-        <p id="sheetMeta"></p>
-        <p id="sheetPrices"></p>
-      </div>
-      <div class="say" id="say">
-        <p class="say-main" id="sayMain"></p>
-        <p class="say-sub" id="saySub"></p>
-      </div>
-      <div class="sheet-cur" id="sheetCur">
-        <span class="ctl-label" id="sheetCurLabel" data-i18n>Show this country in</span>
-        <div class="seg-ctl" role="group" aria-labelledby="sheetCurLabel">
-          <button type="button" id="cur-global" data-local="0" aria-pressed="true"></button>
-          <button type="button" id="cur-local" data-local="1" aria-pressed="false"></button>
+        <p class="caveat" id="caveat" hidden></p>
+        <dl class="tiles" id="tiles"></dl>
+
+        <figure class="fig" id="fig1">
+          <div class="fig-head">
+            <div><h3 data-i18n>How many people live at each income level</h3><p id="fig1Sub"></p></div>
+            <button type="button" class="link-btn" id="fig1Toggle" aria-pressed="false"></button>
+          </div>
+          <div class="legend" id="fig1Legend"></div>
+          <div class="chart" id="fig1Chart"></div>
+          <div class="tbl-wrap" id="fig1Table" hidden></div>
+          <p class="fig-note" id="fig1Note" hidden></p>
+        </figure>
+
+        <figure class="fig" id="figSplit">
+          <div class="fig-head"><div><h3 data-i18n>Who gets the income</h3><p id="splitSub"></p></div></div>
+          <p class="fig-say" id="splitSay"></p>
+          <div class="split" id="splitChart"></div>
+          <p class="fig-note" id="splitNote"></p>
+        </figure>
+
+        <figure class="fig" id="figHist">
+          <div class="fig-head"><div><h3 data-i18n>How it has changed</h3><p id="histSub"></p></div></div>
+          <p class="fig-say" id="histSay"></p>
+          <div class="hist" id="histChart"></div>
+          <p class="fig-note" id="histNote"></p>
+        </figure>
+
+        <figure class="fig" id="fig2">
+          <div class="fig-head">
+            <div><h3 data-i18n>What each tenth of the population lives on</h3><p id="fig2Sub"></p></div>
+            <button type="button" class="link-btn" id="fig2Toggle" aria-pressed="false"></button>
+          </div>
+          <div class="legend" id="fig2Legend"></div>
+          <div class="chart dec" id="fig2Chart"></div>
+          <div class="tbl-wrap" id="fig2Table" hidden></div>
+          <p class="fig-note" id="fig2Note"></p>
+        </figure>
+      </section>
+
+      <section class="ledger" aria-labelledby="ledgerTitle">
+        <div class="ledger-head">
+          <h2 id="ledgerTitle"></h2>
+          <div class="seg-ctl" role="group" aria-label="Show the list as" data-i18n-attr="aria-label">
+            <button type="button" data-view="bars" aria-pressed="true" data-i18n>Bars</button>
+            <button type="button" data-view="num" aria-pressed="false" data-i18n>Numbers</button>
+          </div>
         </div>
+        <div class="filters">
+          <label class="field"><span data-i18n>Find a country</span><input id="q" type="search" placeholder="Type a name" data-i18n-attr="placeholder" autocomplete="off"></label>
+          <label class="field"><span data-i18n>Part of the world</span>
+            <select id="region">
+              <option value="all" data-i18n>All countries</option>
+              <option value="Africa" data-i18n>Africa</option><option value="Asia" data-i18n>Asia</option><option value="Europe" data-i18n>Europe</option>
+              <option value="North America" data-i18n>North America</option><option value="South America" data-i18n>South America</option><option value="Oceania" data-i18n>Oceania</option>
+            </select>
+          </label>
+          <label class="field"><span data-i18n>Sort by</span><select id="sort"></select></label>
+        </div>
+        <p class="count" id="count" aria-live="polite"></p>
+        <div id="barsView">
+          <div class="cols" aria-hidden="true">
+            <span data-i18n>Country</span><span id="colYear"></span><span class="c-med" id="colMed"></span>
+            <span class="c-span"><span data-i18n>Share of people, poorer</span><span data-i18n>richer</span></span>
+          </div>
+          <ul class="rows" id="rows"></ul>
+        </div>
+        <div class="tbl-wrap" id="numView" hidden></div>
+        <p class="empty" id="empty" hidden></p>
+      </section>
+    </main>
+  </div>
+  <div class="panel" role="tabpanel" id="panel-stand" aria-labelledby="tab-stand" hidden>
+    <section class="stand" id="stand" aria-labelledby="standTitle">
+      <div class="sec-head">
+        <h2 id="standTitle" data-i18n>Where do I stand?</h2>
+        <p data-i18n>Type in your household's income. It is divided by the number of people living on it, the same way the surveys count.</p>
       </div>
-      <p class="caveat" id="caveat" hidden></p>
-      <dl class="tiles" id="tiles"></dl>
-
-      <figure class="fig" id="fig1">
-        <div class="fig-head">
-          <div><h3 data-i18n>How many people live at each income level</h3><p id="fig1Sub"></p></div>
-          <button type="button" class="link-btn" id="fig1Toggle" aria-pressed="false"></button>
-        </div>
-        <div class="legend" id="fig1Legend"></div>
-        <div class="chart" id="fig1Chart"></div>
-        <div class="tbl-wrap" id="fig1Table" hidden></div>
-        <p class="fig-note" id="fig1Note" hidden></p>
-      </figure>
-
-      <figure class="fig" id="figSplit">
-        <div class="fig-head"><div><h3 data-i18n>Who gets the income</h3><p id="splitSub"></p></div></div>
-        <p class="fig-say" id="splitSay"></p>
-        <div class="split" id="splitChart"></div>
-        <p class="fig-note" id="splitNote"></p>
-      </figure>
-
-      <figure class="fig" id="figHist">
-        <div class="fig-head"><div><h3 data-i18n>How it has changed</h3><p id="histSub"></p></div></div>
-        <p class="fig-say" id="histSay"></p>
-        <div class="hist" id="histChart"></div>
-        <p class="fig-note" id="histNote"></p>
-      </figure>
-
-      <figure class="fig" id="fig2">
-        <div class="fig-head">
-          <div><h3 data-i18n>What each tenth of the population lives on</h3><p id="fig2Sub"></p></div>
-          <button type="button" class="link-btn" id="fig2Toggle" aria-pressed="false"></button>
-        </div>
-        <div class="legend" id="fig2Legend"></div>
-        <div class="chart dec" id="fig2Chart"></div>
-        <div class="tbl-wrap" id="fig2Table" hidden></div>
-        <p class="fig-note" id="fig2Note"></p>
-      </figure>
-    </section>
-
-    <section class="ledger" aria-labelledby="ledgerTitle">
-      <div class="ledger-head">
-        <h2 id="ledgerTitle"></h2>
-        <div class="seg-ctl" role="group" aria-label="Show the list as" data-i18n-attr="aria-label">
-          <button type="button" data-view="bars" aria-pressed="true" data-i18n>Bars</button>
-          <button type="button" data-view="num" aria-pressed="false" data-i18n>Numbers</button>
-        </div>
-      </div>
-      <div class="filters">
-        <label class="field"><span data-i18n>Find a country</span><input id="q" type="search" placeholder="Type a name" data-i18n-attr="placeholder" autocomplete="off"></label>
-        <label class="field"><span data-i18n>Part of the world</span>
-          <select id="region">
-            <option value="all" data-i18n>All countries</option>
-            <option value="Africa" data-i18n>Africa</option><option value="Asia" data-i18n>Asia</option><option value="Europe" data-i18n>Europe</option>
-            <option value="North America" data-i18n>North America</option><option value="South America" data-i18n>South America</option><option value="Oceania" data-i18n>Oceania</option>
+      <div class="stand-form">
+        <label class="field"><span data-i18n>I live in</span><select id="stCountry"></select></label>
+        <label class="field"><span data-i18n>Household income</span><input id="stAmount" type="number" inputmode="decimal" min="0" step="any" autocomplete="off"></label>
+        <label class="field"><span data-i18n>Per</span>
+          <select id="stPeriod">
+            <option value="day" data-i18n>day</option>
+            <option value="month" selected data-i18n>month</option>
+            <option value="year" data-i18n>year</option>
           </select>
         </label>
-        <label class="field"><span data-i18n>Sort by</span><select id="sort"></select></label>
+        <label class="field"><span data-i18n>Currency</span><select id="stCur"></select></label>
+        <label class="field"><span data-i18n>People in the household</span><input id="stPeople" type="number" inputmode="numeric" min="1" step="1" value="1"></label>
       </div>
-      <p class="count" id="count" aria-live="polite"></p>
-      <div id="barsView">
-        <div class="cols" aria-hidden="true">
-          <span data-i18n>Country</span><span id="colYear"></span><span class="c-med" id="colMed"></span>
-          <span class="c-span"><span data-i18n>Share of people, poorer</span><span data-i18n>richer</span></span>
-        </div>
-        <ul class="rows" id="rows"></ul>
-      </div>
-      <div class="tbl-wrap" id="numView" hidden></div>
-      <p class="empty" id="empty" hidden></p>
+      <div class="stand-out" id="stOut" aria-live="polite"></div>
+      <p class="fine" data-i18n>Nothing you type leaves your device or is saved.</p>
     </section>
-  </main>
+  </div>
+  <div class="panel" role="tabpanel" id="panel-map" aria-labelledby="tab-map" hidden>
+    <section class="mapsec" id="mapSec" aria-labelledby="mapTitle">
+      <div class="sec-head">
+        <h2 id="mapTitle" data-i18n>Where the red is</h2>
+        <p id="mapCap"></p>
+      </div>
+      <div class="map" id="map"></div>
+      <p class="fine" data-i18n>Small island countries are too small to show on the map; find them in the list below. Select a country to open it.</p>
+    </section>
+  </div>
+  <div class="panel" role="tabpanel" id="panel-guide" aria-labelledby="tab-guide" hidden>
+    <section class="howto" aria-labelledby="howtoTitle">
+      <h2 id="howtoTitle" data-i18n>How to read this page</h2>
+      <ol class="howto-steps">
+        <li>
+          <div class="howto-fig" aria-hidden="true">
+            <span class="howto-row"><span class="howto-name" id="howName"></span><span class="stack" id="howBar"></span></span>
+            <span class="howto-ends"><span data-i18n>← poorest</span><span data-i18n>richest →</span></span>
+          </div>
+          <p><b data-i18n>Each bar is everyone in a country.</b> <span data-i18n>People are lined up from the poorest on the left to the richest on the right. A wider block means more people.</span></p>
+        </li>
+        <li>
+          <div class="howto-fig howto-chips" aria-hidden="true">
+            <span><i class="chip red"></i><span id="howRed"></span></span>
+            <span><i class="chip s4"></i><span id="howAmber"></span></span>
+            <span><i class="chip grey"></i><span id="howGrey"></span></span>
+          </div>
+          <p><b data-i18n>Colour shows what people live on.</b> <span data-i18n>Red is the bottom of the ladder, amber is the middle, grey is the top. Darker red is poorer.</span></p>
+        </li>
+        <li>
+          <div class="howto-fig" id="howPair" aria-hidden="true"></div>
+          <p><b data-i18n>More red means more people are poor.</b> <span data-i18n>Pick any country in the list to see its own numbers, in plain words.</span></p>
+        </li>
+      </ol>
+    </section>
+  </div>
 
   <footer class="notes" id="notes"></footer>
 </div>
@@ -225,10 +241,10 @@
 
 <div class="tip" id="tip" hidden aria-hidden="true"></div>
 <!-- page:end -->
-<script src="data/countries.js"></script>
-<script src="data/rates.js"></script>
-<script src="data/map.js"></script>
-<script src="js/i18n.js"></script>
-<script src="js/app.js"></script>
+<script src="data/countries.js?v=918fd493"></script>
+<script src="data/rates.js?v=2a68e046"></script>
+<script src="data/map.js?v=00b90b21"></script>
+<script src="js/i18n.js?v=6347d5ac"></script>
+<script src="js/app.js?v=60fd904d"></script>
 </body>
 </html>

@@ -35,7 +35,7 @@ def main():
     if "</script" in history.lower():
         raise SystemExit("data/history.js contains a closing script tag and cannot be inlined")
     scripts.append(f"<script>\n{history}</script>")
-    for src in re.findall(r'<script src="([^"]+)"></script>', html):
+    for src in re.findall(r'<script src="([^"?]+)(?:\?v=[0-9a-f]+)?"></script>', html):
         code = (ROOT / src).read_text(encoding="utf-8")
         if "</script" in code.lower():
             raise SystemExit(f"{src} contains a closing script tag and cannot be inlined")

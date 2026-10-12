@@ -253,7 +253,11 @@ window.GIL_I18N.hi = {
  "Other": "अन्य",
  "a day": "प्रति दिन",
  "a month": "प्रति महीना",
- "a year": "प्रति साल"
+ "a year": "प्रति साल",
+ "Countries": "देश",
+ "World map": "विश्व मानचित्र",
+ "How to read this": "इसे कैसे पढ़ें",
+ "Sections": "हिस्से"
 };
 
 /* Spanish: machine-made, not yet checked by a native speaker. */
@@ -505,7 +509,11 @@ window.GIL_I18N.es = {
  "Other": "Otros",
  "a day": "al día",
  "a month": "al mes",
- "a year": "al año"
+ "a year": "al año",
+ "Countries": "Países",
+ "World map": "Mapa del mundo",
+ "How to read this": "Cómo leer esto",
+ "Sections": "Secciones"
 };
 
 /* French: machine-made, not yet checked by a native speaker. */
@@ -757,7 +765,11 @@ window.GIL_I18N.fr = {
  "Other": "Autres",
  "a day": "par jour",
  "a month": "par mois",
- "a year": "par an"
+ "a year": "par an",
+ "Countries": "Pays",
+ "World map": "Carte du monde",
+ "How to read this": "Comment lire",
+ "Sections": "Sections"
 };
 
 /* Portuguese (Brazil): machine-made, not yet checked by a native speaker. */
@@ -1009,5 +1021,9 @@ window.GIL_I18N.pt = {
  "Other": "Outros",
  "a day": "por dia",
  "a month": "por mês",
- "a year": "por ano"
+ "a year": "por ano",
+ "Countries": "Países",
+ "World map": "Mapa-múndi",
+ "How to read this": "Como ler",
+ "Sections": "Seções"
 };

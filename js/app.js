@@ -84,7 +84,9 @@
   var params = new URLSearchParams(location.search);
   var MODE = params.get("embed") ? "embed" : params.get("present") ? "present" : "page";
   var state = { unit: "day", money: "usd", data: "survey", local: false, sel: biggest.c, cmp: "", q: "", region: "all",
-    sort: "name", view: "bars", t1: false, t2: false, lang: "en" };
+    sort: "name", view: "bars", t1: false, t2: false, lang: "en", tab: "countries" };
+  var TABS = ["countries", "stand", "map", "guide"];
+  if (TABS.indexOf(location.hash.slice(1)) !== -1) state.tab = location.hash.slice(1);
   var LIST, byCode, memo = {};
   function useData(mode) {
     state.data = mode === "est" && ESTIMATES.length ? "est" : "survey";
@@ -143,7 +145,8 @@
   function remember() {
     save("gil:view", { unit: state.unit, money: state.money, data: state.data, sel: state.sel, cmp: state.cmp, local: state.local });
     if (MODE !== "page") return;
-    try { history.replaceState(null, "", pageUrl(linkState({ c: state.sel, cmp: state.cmp || null }))); } catch (e) { /* not allowed here */ }
+    var hash = state.tab !== "countries" ? "#" + state.tab : "";
+    try { history.replaceState(null, "", pageUrl(linkState({ c: state.sel, cmp: state.cmp || null })) + hash); } catch (e) { /* not allowed here */ }
   }
 
   /* ------------------------------------------------------------ helpers -- */
@@ -899,7 +902,7 @@
     if (HIST || histLoading) return;
     histLoading = true;
     var s = document.createElement("script");
-    s.src = "data/history.js";
+    s.src = "data/history.js?v=" + encodeURIComponent(META.generated || "");   // new data, new address: no stale copy
     s.onload = function () { HIST = window.GIL_HISTORY || { lines: [], c: {} }; done(); };
     s.onerror = function () { HIST = { lines: [], c: {}, failed: true }; done(); };
     document.head.appendChild(s);
@@ -1183,6 +1186,20 @@
       var smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       $("sheet").scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
     }
+  }
+
+  /* --------------------------------------------------------------- tabs -- */
+  function showTab(name, focus) {
+    if (TABS.indexOf(name) === -1) name = "countries";
+    state.tab = name;
+    TABS.forEach(function (n) {
+      var on = n === name, tab = $("tab-" + n);
+      tab.setAttribute("aria-selected", String(on));
+      tab.tabIndex = on ? 0 : -1;
+      $("panel-" + n).hidden = !on;
+    });
+    if (focus) $("tab-" + name).focus();
+    remember();
   }
 
   /* ---------------------------------------------------------------- map -- */
@@ -1486,7 +1503,7 @@
     openShare({ d: r.pw != null ? WORLD : r.d, title: t("Where do I stand?"), headline: text, sub: "",
       sh: r.pw != null ? shares(WORLD, r.ctx, e) : shares(r.d, r.ctx, e), e: e, cur: "USD", marker: f, stripe: bracketOf(1),
       source: (r.pw != null ? t("World Bank estimates for {year}", { year: EST_YEAR }) : sourceLine(r.d)) + " · " + moneyWords(r.ctx), file: "where-i-stand" },
-      pageUrl(linkState({})) + "#stand", text);
+      pageUrl(linkState({})) + "#stand", text);   // opens the "Where do I stand?" tab
   }
   function openEmbed() {
     var d = byCode[state.sel];
@@ -1705,7 +1722,7 @@
     mapEl.addEventListener("pointerleave", hideTip);
     mapEl.addEventListener("click", function (e) {
       var p = e.target.closest("path");
-      if (p && byCode[p.dataset.c]) { hideTip(); select(p.dataset.c, "always"); }
+      if (p && byCode[p.dataset.c]) { hideTip(); showTab("countries"); select(p.dataset.c, "always"); }
     });
 
     document.querySelectorAll("[data-unit]").forEach(function (b) {
@@ -1750,6 +1767,16 @@
       var tr = e.target.closest("tbody tr");
       if (tr) { e.preventDefault(); select(tr.dataset.c, true); }
     });
+    document.querySelectorAll("[data-tab]").forEach(function (b) {
+      b.addEventListener("click", function () { showTab(b.dataset.tab); });
+      b.addEventListener("keydown", function (e) {   // arrow keys move between tabs
+        var i = TABS.indexOf(b.dataset.tab), step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        showTab(TABS[(i + step + TABS.length) % TABS.length], true);
+      });
+    });
+    window.addEventListener("hashchange", function () { showTab(location.hash.slice(1)); });
     $("btnShare").addEventListener("click", shareCountry);
     $("btnEmbed").addEventListener("click", openEmbed);
     $("stCountry").addEventListener("change", function () { fillStandCur(); renderStand(); });
@@ -1847,6 +1874,6 @@
     pressed("[data-view]", "view", state.view);
   }
   renderAll();
-  if (MODE === "page" && location.hash === "#stand") $("stand").scrollIntoView();
+  if (MODE === "page") showTab(state.tab);
   refreshRates();
 })();

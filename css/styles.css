@@ -425,3 +425,14 @@ body.embed-mode, body.present-mode { min-height: 100vh; }
   .teach-sec { border: 0; }
   body { background: #fff; color: #000; }
 }
+
+/* ---------- tabs ---------- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--axis); overflow-x: auto; scrollbar-width: none; margin-bottom: -12px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: none; border: 0; background: none; padding: 10px 16px 11px; font-size: 15px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.tabs button:focus-visible { outline-offset: -3px; }
+.panel { display: flex; flex-direction: column; gap: 28px; }
+.panel > .mapsec, .panel > .stand, .panel > .howto { border-top: 0; padding-top: 0; }
+@media (max-width: 520px) { .tabs button { padding-inline: 12px; font-size: 14px; } }

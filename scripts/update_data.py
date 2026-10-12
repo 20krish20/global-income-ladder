@@ -32,6 +32,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from common import CACHE_DIR, DATA_DIR, http_get, log, price_factors, read_js, sig, today, write_js
 from countries import COUNTRIES, ISO2, LEGACY_UNITS, REGION_TO_CONTINENT
+import stamp
 import update_rates
 
 PIP_URL = os.environ.get("GIL_PIP_URL", "https://api.worldbank.org/pip/v1")
@@ -568,6 +569,7 @@ def main():
     lines.append(f"Done in {time.time() - started:.0f} seconds. Open index.html to see it.")
     report = "\n".join(lines)
     log("\n" + report)
+    stamp.stamp_pages()
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     (CACHE_DIR / "update_report.txt").write_text(report + "\n", encoding="utf-8")
 

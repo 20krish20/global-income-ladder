@@ -70,6 +70,8 @@ def write_rates(all_rates):
 
 def main():
     write_rates(fetch_rates())
+    import stamp   # the page must ask for the new rates file, not a cached one
+    stamp.stamp_pages()
 
 
 if __name__ == "__main__":
