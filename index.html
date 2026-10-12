@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Global Income Ladder</title>
+<meta name="description" content="How each country's people are spread across income levels, in today's US dollars or their own currency. World Bank household surveys.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<script id="theme-boot">try { var t = localStorage.getItem("gil:theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<!-- page:start -->
+<div class="page">
+  <header class="mast">
+    <p class="eyebrow">Household surveys from <span id="nCountries">169</span> countries, compiled by the World Bank</p>
+    <h1>Global Income Ladder</h1>
+    <p class="lede" id="lede">How much do people live on, country by country? See how each country's people are spread across income levels, from the poorest to the richest, in dollars or in their own currency.</p>
+    <div class="controls">
+      <span class="ctl-label" id="moneyLabel">Count money in</span>
+      <div class="seg-ctl" role="group" aria-labelledby="moneyLabel">
+        <button type="button" id="money-usd" data-money="usd" aria-pressed="true">Today's US dollars</button>
+        <button type="button" id="money-ppp" data-money="ppp" aria-pressed="false">Price-adjusted dollars</button>
+      </div>
+      <span class="ctl-label" id="unitLabel">Show incomes per</span>
+      <div class="seg-ctl" role="group" aria-labelledby="unitLabel">
+        <button type="button" id="unit-day" data-unit="day" aria-pressed="true">Day</button>
+        <button type="button" id="unit-month" data-unit="month" aria-pressed="false">Month</button>
+        <button type="button" id="unit-year" data-unit="year" aria-pressed="false">Year</button>
+      </div>
+      <span class="ctl-label" id="themeLabel">Colours</span>
+      <div class="seg-ctl" role="group" aria-labelledby="themeLabel">
+        <button type="button" data-theme-pick="auto" aria-pressed="true" title="Follow this device's setting">Auto</button>
+        <button type="button" data-theme-pick="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme-pick="dark" aria-pressed="false">Dark</button>
+      </div>
+      <p class="fx-note" id="fxNote" aria-live="polite"></p>
+    </div>
+  </header>
+
+  <section class="world" aria-labelledby="worldCap">
+    <p class="world-cap"><span id="worldCap"></span><span>poorer on the left, richer on the right</span></p>
+    <ol class="key" id="key"></ol>
+  </section>
+
+  <section class="howto" aria-labelledby="howtoTitle">
+    <h2 id="howtoTitle">How to read this page</h2>
+    <ol class="howto-steps">
+      <li>
+        <div class="howto-fig" aria-hidden="true">
+          <span class="howto-row"><span class="howto-name" id="howName"></span><span class="stack" id="howBar"></span></span>
+          <span class="howto-ends"><span>&larr; poorest</span><span>richest &rarr;</span></span>
+        </div>
+        <p><b>Each bar is everyone in a country.</b> People are lined up from the poorest on the left to the richest on the right. A wider block means more people.</p>
+      </li>
+      <li>
+        <div class="howto-fig howto-chips" aria-hidden="true">
+          <span><i class="chip red"></i><span id="howRed"></span></span>
+          <span><i class="chip s4"></i><span id="howAmber"></span></span>
+          <span><i class="chip grey"></i><span id="howGrey"></span></span>
+        </div>
+        <p><b>Colour shows what people live on.</b> Red is the bottom of the ladder, amber is the middle, grey is the top. Darker red is poorer.</p>
+      </li>
+      <li>
+        <div class="howto-fig" id="howPair" aria-hidden="true"></div>
+        <p><b>More red means more people are poor.</b> Pick any country in the list to see its own numbers, in plain words.</p>
+      </li>
+    </ol>
+  </section>
+
+  <main class="grid">
+    <section class="sheet" id="sheet" aria-labelledby="sheetName">
+      <div class="pickers">
+        <label class="field"><span>Country</span><select id="pick"></select></label>
+        <label class="field"><span>Compare with</span><select id="cmp"></select></label>
+      </div>
+      <div class="sheet-head">
+        <h2 id="sheetName"></h2>
+        <p id="sheetMeta"></p>
+        <p id="sheetPrices"></p>
+      </div>
+      <div class="say" id="say">
+        <p class="say-main" id="sayMain"></p>
+        <p class="say-sub" id="saySub"></p>
+      </div>
+      <div class="sheet-cur" id="sheetCur">
+        <span class="ctl-label" id="sheetCurLabel">Show this country in</span>
+        <div class="seg-ctl" role="group" aria-labelledby="sheetCurLabel">
+          <button type="button" id="cur-global" data-local="0" aria-pressed="true">US dollars</button>
+          <button type="button" id="cur-local" data-local="1" aria-pressed="false">Local currency</button>
+        </div>
+      </div>
+      <p class="caveat" id="caveat" hidden></p>
+      <dl class="tiles" id="tiles"></dl>
+
+      <figure class="fig" id="fig1">
+        <div class="fig-head">
+          <div><h3>How many people live at each income level</h3><p id="fig1Sub"></p></div>
+          <button type="button" class="link-btn" id="fig1Toggle" aria-pressed="false">Table</button>
+        </div>
+        <div class="legend" id="fig1Legend"></div>
+        <div class="chart" id="fig1Chart"></div>
+        <div class="tbl-wrap" id="fig1Table" hidden></div>
+        <p class="fig-note" id="fig1Note" hidden></p>
+      </figure>
+
+      <figure class="fig" id="fig2">
+        <div class="fig-head">
+          <div><h3>What each tenth of the population lives on</h3><p id="fig2Sub"></p></div>
+          <button type="button" class="link-btn" id="fig2Toggle" aria-pressed="false">Table</button>
+        </div>
+        <div class="legend" id="fig2Legend"></div>
+        <div class="chart dec" id="fig2Chart"></div>
+        <div class="tbl-wrap" id="fig2Table" hidden></div>
+        <p class="fig-note" id="fig2Note"></p>
+      </figure>
+    </section>
+
+    <section class="ledger" aria-labelledby="ledgerTitle">
+      <div class="ledger-head">
+        <h2 id="ledgerTitle">Every country</h2>
+        <div class="seg-ctl" role="group" aria-label="Show the list as">
+          <button type="button" id="view-bars" data-view="bars" aria-pressed="true">Bars</button>
+          <button type="button" id="view-num" data-view="num" aria-pressed="false">Numbers</button>
+        </div>
+      </div>
+      <div class="filters">
+        <label class="field"><span>Find a country</span><input id="q" type="search" placeholder="Type a name" autocomplete="off"></label>
+        <label class="field"><span>Part of the world</span>
+          <select id="region">
+            <option value="all">All countries</option>
+            <option>Africa</option><option>Asia</option><option>Europe</option>
+            <option>North America</option><option>South America</option><option>Oceania</option>
+          </select>
+        </label>
+        <label class="field"><span>Sort by</span><select id="sort"></select></label>
+      </div>
+      <p class="count" id="count" aria-live="polite"></p>
+      <div id="barsView">
+        <div class="cols" aria-hidden="true">
+          <span>Country</span><span>Survey</span><span class="c-med" id="colMed">Median</span>
+          <span class="c-span"><span>Share of people, poorer</span><span>richer</span></span>
+        </div>
+        <ul class="rows" id="rows"></ul>
+      </div>
+      <div class="tbl-wrap" id="numView" hidden></div>
+      <p class="empty" id="empty" hidden></p>
+    </section>
+  </main>
+
+  <footer class="notes">
+    <h2>How to read the numbers</h2>
+    <p><b>Today's US dollars.</b> Each survey's incomes are first brought to this year's prices using the country's own inflation, then converted at the current exchange rate. This is the money people would actually hold, in dollars.</p>
+    <p><b>Local currency.</b> The same amounts before the exchange-rate step, in the currency people are paid in. Open a country and use the switch in its panel.</p>
+    <p><b>Price-adjusted dollars.</b> A dollar buys far more in some countries than others. This view corrects for that, so the same number means roughly the same standard of living everywhere. Amounts are in <span id="noteIntl">international dollars</span>.</p>
+    <p><b>Re-priced, not re-surveyed.</b> Each row shows the year people were surveyed. Amounts are updated for prices and exchange rates, but not for pay rises or growth since that survey.</p>
+    <p><b>Income is per person.</b> A household's total is divided by everyone in it, children included. A family of four on $40 a day counts as four people on $10 a day.</p>
+    <p><b>Some surveys measure income, others spending.</b> Richer countries mostly report income; most others report what households consume. Spending-based figures tend to look more equal, so compare across the two with care.</p>
+    <p><b>No world total.</b> Countries run their surveys in different years, from <span id="noteOldest"></span> to <span id="noteNewest"></span>. Adding them up would mix different years into one number, so each country stands on its own.</p>
+    <p><b>Sources.</b> <span id="noteSource"></span> Inflation: <span id="noteInfl"></span>. Exchange rates: <a href="https://github.com/fawazahmed0/exchange-api" target="_blank" rel="noopener">open currency API</a>, <span id="noteFx"></span>.</p>
+  </footer>
+</div>
+
+<div class="tip" id="tip" hidden aria-hidden="true"></div>
+<!-- page:end -->
+<script src="data/countries.js"></script>
+<script src="data/rates.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
