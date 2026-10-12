@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>For teachers · Global Income Ladder</title>
+<meta name="description" content="A 45-minute lesson on global income, with classroom slides built from World Bank household surveys.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<script>try { var t = localStorage.getItem("gil:theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<div class="page teach">
+  <header class="teach-head">
+    <p class="eyebrow"><a href="index.html">← Global Income Ladder</a></p>
+    <h1>For teachers</h1>
+    <p class="lede">A ready lesson on how people around the world live, for students aged about 12 to 18. It takes 45 minutes and needs one screen at the front of the room. Everything is free to use.</p>
+  </header>
+
+  <section class="teach-sec" aria-labelledby="slidesTitle">
+    <h2 id="slidesTitle">1. Make your slides</h2>
+    <p>Pick countries, then start. Each slide shows one country's people from poorest to richest, with one plain sentence. With <b>guess first</b> on, students see only the country's name until you reveal the answer, which works well for discussion.</p>
+    <div class="sets" id="sets"></div>
+    <div class="builder">
+      <label class="field"><span>Add a country</span><select id="add"><option value="">Choose…</option></select></label>
+      <ol class="chosen" id="chosen" aria-live="polite"></ol>
+      <label class="check"><input type="checkbox" id="guess" checked> Guess first</label>
+      <div class="dlg-acts">
+        <a class="btn primary" id="start" href="index.html">Start slides</a>
+        <button type="button" class="btn" id="clear">Clear</button>
+      </div>
+      <p class="fine">Keys: → or space for the next slide (or to reveal), ← to go back. "Full screen" is on each slide.</p>
+    </div>
+  </section>
+
+  <section class="teach-sec" aria-labelledby="planTitle">
+    <h2 id="planTitle">2. The lesson (45 minutes)</h2>
+    <p><b>By the end, students can</b> read an income distribution, explain what a median is, compare two countries in a fair way, and say why "price-adjusted" money matters.</p>
+    <ol class="plan">
+      <li><b>Starter, 5 min: where do you think you stand?</b> Ask: "Out of every 100 people in the world, how many do you think live on less than you?" Students write a number down and keep it.</li>
+      <li><b>Read one bar, 10 min.</b> Show one country with guess first. Before revealing, ask students to sketch how they think its people spread across the coloured income levels. Reveal and compare. Explain: the bar is everyone in the country, lined up from poorest to richest; red is the bottom of the ladder, grey the top.</li>
+      <li><b>Compare, 10 min.</b> Show three countries from different continents (try the "Around the world" set). In pairs: which country surprised you most, and why? What would a family on $5 a day be able to buy where you live?</li>
+      <li><b>Change over time, 10 min.</b> On the main site, open a country such as India, China or Bangladesh and scroll to "How it has changed". What happened to the share of people in extreme poverty? Point out the note when a survey changed its method: numbers are not always comparable.</li>
+      <li><b>Back to the starter, 5 min.</b> Use "Where do I stand?" on the main site with a typical household income for your area (not a student's own). How close were the guesses?</li>
+      <li><b>Exit question, 5 min.</b> "One thing these numbers can't tell us about people's lives is…"</li>
+    </ol>
+  </section>
+
+  <section class="teach-sec" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">3. Worksheet</h2>
+    <p class="fine">Print this page; only this worksheet and the glossary print.</p>
+    <div class="worksheet">
+      <p><b>Name:</b> ________________________________</p>
+      <ol>
+        <li>My guess: out of 100 people in the world, ______ live on less than a typical family where I live.</li>
+        <li>Country I looked at: ______________________. Most of its people are in the colour ______________, which means they live on ______________ a day.</li>
+        <li>Half the people in that country live on less than ______________ a day. This number is called the ______________.</li>
+        <li>Two countries I compared: ______________ and ______________. The biggest difference I saw was ________________________________________________.</li>
+        <li>In ______ (year), ______% of people in ______________ lived in extreme poverty. In ______ (year), it was ______%. One reason this might have changed: ________________________________.</li>
+        <li>Why do we use "price-adjusted dollars" when comparing countries? ________________________________________________</li>
+        <li>One thing these numbers can't tell us about people's lives: ________________________________________________</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="teach-sec glossary" aria-labelledby="glossTitle">
+    <h2 id="glossTitle">Glossary</h2>
+    <dl>
+      <dt>Median</dt><dd>The middle person's income: half the people live on less, half on more.</dd>
+      <dt>Per person</dt><dd>A household's income divided by everyone in it, children included.</dd>
+      <dt>Price-adjusted dollars</dt><dd>Money corrected for prices, so $1 buys the same amount everywhere. A dollar goes much further in some countries than others.</dd>
+      <dt>Extreme poverty</dt><dd>Living on less than $3.00 a day in price-adjusted dollars: the World Bank's line.</dd>
+      <dt>Household survey</dt><dd>A government study that asks thousands of households what they earn or spend. Countries run them every few years.</dd>
+      <dt>Estimate</dt><dd>A careful calculation, not a measurement: the World Bank moves older surveys forward to a recent year using economic growth.</dd>
+    </dl>
+  </section>
+
+  <footer class="notes">
+    <p>Data: World Bank Poverty and Inequality Platform. This page is in English only for now.</p>
+  </footer>
+</div>
+<script src="data/countries.js"></script>
+<script>
+(function () {
+  "use strict";
+  var list = ((window.GIL_DATA || {}).countries || []).slice().sort(function (a, b) { return a.n.localeCompare(b.n); });
+  var byCode = {};
+  list.forEach(function (d) { byCode[d.c] = d; });
+  var SETS = [
+    ["Around the world", ["BDI", "IND", "BRA", "CHN", "USA"]],
+    ["Africa's range", ["MOZ", "NGA", "KEN", "ZAF", "EGY"]],
+    ["South Asia", ["BGD", "IND", "PAK", "NPL", "LKA"]],
+    ["Americas", ["HTI", "BOL", "MEX", "BRA", "CAN"]],
+    ["Europe", ["UKR", "ROU", "ESP", "DEU", "NOR"]]
+  ];
+  var chosen = [];
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function link(codes) { return "index.html?present=" + codes.join(",") + ($("guess").checked ? "&guess=1" : ""); }
+  function draw() {
+    var ol = $("chosen");
+    ol.textContent = "";
+    chosen.forEach(function (c, i) {
+      var li = el("li");
+      var img = el("img", "flag"); img.alt = ""; img.src = "flags/" + c.toLowerCase() + ".svg";
+      li.appendChild(img);
+      li.appendChild(document.createTextNode(byCode[c].n));
+      var x = el("button", "link-btn", "Remove"); x.type = "button";
+      x.addEventListener("click", function () { chosen.splice(i, 1); draw(); });
+      li.appendChild(x);
+      ol.appendChild(li);
+    });
+    if (!chosen.length) ol.appendChild(el("li", "fine", "No countries yet. Pick a set above or add countries one by one."));
+    var start = $("start");
+    start.href = chosen.length ? link(chosen) : "#";
+    start.setAttribute("aria-disabled", String(!chosen.length));
+    var sets = $("sets");
+    sets.textContent = "";
+    SETS.forEach(function (s) {
+      var codes = s[1].filter(function (c) { return byCode[c]; });
+      if (!codes.length) return;
+      var b = el("button", "btn", s[0] + " (" + codes.length + ")"); b.type = "button";
+      b.addEventListener("click", function () { chosen = codes.slice(); draw(); });
+      sets.appendChild(b);
+    });
+  }
+  list.forEach(function (d) { $("add").appendChild(new Option(d.n, d.c)); });
+  $("add").addEventListener("change", function (e) {
+    var c = e.target.value;
+    if (c && chosen.indexOf(c) === -1) chosen.push(c);
+    e.target.value = "";
+    draw();
+  });
+  $("guess").addEventListener("change", draw);
+  $("clear").addEventListener("click", function () { chosen = []; draw(); });
+  $("start").addEventListener("click", function (e) { if (!chosen.length) e.preventDefault(); });
+  chosen = SETS[0][1].filter(function (c) { return byCode[c]; });
+  draw();
+})();
+</script>
+</body>
+</html>

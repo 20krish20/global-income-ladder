@@ -174,3 +174,32 @@ History over time per country; a map; World Bank regions back; the official worl
 the bottom-up ones; shareable links to a country; an IMF or national-statistics source for
 current-year inflation; replacing the `DEV`-branch files with the PIP API's own auxiliary tables;
 tests for `cdf()` and the bracket maths.
+
+## 11. Added in October 2026 (second round)
+
+- **Same-year estimates.** `update_data.py` now also downloads the World Bank's lined-up estimates for
+  last year (`fill_gaps=true`, 30 income levels). Each country gets `e` in `countries.js`; 46 economies
+  with no survey of their own go in `others` and count only toward world figures. A "Figures from:
+  Latest surveys / 2025 estimate" switch shows them. World figures exist only in that view.
+  Check: adding up every estimate puts 9.95% of people below $3 a day in 2025, the World Bank's own figure.
+  Argentina's estimate is urban only, as the World Bank uses it.
+- **History.** `data/history.js` holds every survey comparable with the one shown (same coverage and
+  measure), loaded only when a country is opened. Bars show up to eight surveys; a `*` marks a year
+  where the survey changed method (the World Bank's `survey_comparability` number changed).
+- **$450 income level** now downloads (it failed before). It adds one point at the top of each curve;
+  no median changed.
+- **Extreme poverty line** ($3.00 a day, 2021 prices): a tile per country, a dashed line on the tenths
+  chart, a sort order, and the history sentence. Only shown when `meta.pppYear` is 2021.
+- **Who gets the income**: poorest half, middle 40%, richest 10%, straight from the survey's tenths,
+  with a note that surveys miss the very rich.
+- **Where do I stand?** Household income ÷ people, in local currency or US dollars. Compared with the
+  country (its estimate where there is one) and with the world (estimates, in the page's money view).
+- **Map** (`data/map.js`, Natural Earth 110m via world-atlas): coloured by the median's bracket. 17 small
+  island states are too small to draw. Places with no data are hatched.
+- **Share pictures** (1200 x 630, drawn on a canvas, always light), **embeds** (`?embed=IND`) and
+  **classroom slides** (`?present=...&guess=1`) plus `teach.html`.
+- **Languages**: Hindi, Spanish, French and Portuguese in `js/i18n.js`, machine-made and **not yet
+  checked by native speakers**. The site does not pick a language automatically until they are
+  (`AUTO_LANG` in `app.js`). Country names come from the browser (`Intl.DisplayNames`).
+- Not checked: the share picture with a flag (blocked when the page is opened from disk; should work
+  online), and `navigator.share` on a real phone.

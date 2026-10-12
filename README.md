@@ -89,11 +89,17 @@ There is **no world total**: countries were surveyed in different years (1992 to
 
 | | |
 |---|---|
-| `index.html` | the page |
+| `index.html` | the page. Also serves `?embed=IND` (a card for other websites) and `?present=IND,BDI&guess=1` (classroom slides) |
+| `teach.html` | lesson plan, worksheet and slide builder for teachers |
 | `css/styles.css` | layout and colours (light and dark) |
 | `js/app.js` | everything the page does |
-| `data/countries.js` | generated: each country's income curve and price figures |
+| `js/i18n.js` | translations (Hindi, Spanish, French, Portuguese), keyed by the English text |
+| `data/countries.js` | generated: each country's income curve, price figures and its World Bank estimate for last year |
+| `data/history.js` | generated: every earlier comparable survey; loaded only when a country is opened |
 | `data/rates.js` | generated: exchange rates |
+| `data/map.js` | generated once by `scripts/build_map.py`: country shapes for the map |
+| `flags/` | one flag per country, generated once by `scripts/build_flags.py` |
+| `scripts/i18n_check.py` | lists the page's text and checks each translation for gaps |
 | `scripts/update_data.py` | fetches survey data, inflation and rates |
 | `scripts/update_rates.py` | fetches exchange rates only |
 | `scripts/countries.py` | country names, continents and currencies. Edit when a country changes currency. |

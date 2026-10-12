@@ -9,10 +9,13 @@ What it does
   1. Asks the World Bank's Poverty and Inequality Platform (PIP) what share of each country's
      people live below each of ~30 income levels. Together those points trace the country's
      whole income distribution, so the site can cut it at any amount, in any currency.
-  2. Keeps each country's most recent survey.
+  2. Keeps each country's most recent survey, and every earlier comparable one as its history
+     (data/history.js).
   3. Adds what is needed to express those incomes as money today: the survey's price-level
      figure (PPP), consumer-price inflation since then, and today's exchange rate.
-  4. Writes data/countries.js and data/rates.js. Nothing is overwritten if a step fails.
+  4. Asks PIP for its same-year estimate of every country (last year, "lined up" from each
+     country's surveys with economic growth). Only these can be added up into a world figure.
+  5. Writes data/countries.js, data/history.js and data/rates.js. Nothing is overwritten if a step fails.
 
 Takes a few minutes. Needs only Python 3.8+; no packages to install.
 """
@@ -21,13 +24,14 @@ import csv
 import datetime
 import io
 import json
+import math
 import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 from common import CACHE_DIR, DATA_DIR, http_get, log, price_factors, read_js, sig, today, write_js
-from countries import COUNTRIES, LEGACY_UNITS, REGION_TO_CONTINENT
+from countries import COUNTRIES, ISO2, LEGACY_UNITS, REGION_TO_CONTINENT
 import update_rates
 
 PIP_URL = os.environ.get("GIL_PIP_URL", "https://api.worldbank.org/pip/v1")
@@ -50,7 +54,8 @@ DEFAULT_PPP_YEAR = 2021
 CACHE_HOURS = 12
 KEEP = ("country_code", "country_name", "region_code", "reporting_year", "reporting_level", "welfare_type",
         "headcount", "mean", "median", "gini", "ppp", "reporting_pop", "survey_acronym", "is_interpolated",
-        "decile1", "decile2", "decile3", "decile4", "decile5", "decile6", "decile7", "decile8", "decile9", "decile10")
+        "decile1", "decile2", "decile3", "decile4", "decile5", "decile6", "decile7", "decile8", "decile9", "decile10",
+        "survey_comparability", "estimation_type")
 # The IMF uses its own codes for a few economies.
 IMF_CODES = {"XKX": "UVK", "PSE": "WBG"}
 
@@ -75,6 +80,23 @@ def fetch_line(line, offline, force):
     rows = json.loads(http_get(url))
     if not isinstance(rows, list) or len(rows) < 300 or "headcount" not in rows[0]:
         raise RuntimeError(f"The World Bank returned something unexpected for the ${line:g} line: {str(rows)[:200]}")
+    slim = [{k: r.get(k) for k in KEEP} for r in rows]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(slim, separators=(",", ":")), encoding="utf-8")
+    return slim
+
+
+def fetch_lineup(line, year, offline, force):
+    """Every economy's estimated share of people below `line` in `year`, lined up from its surveys."""
+    path = CACHE_DIR / "pip" / f"lineup_{year}_{line:g}.json"
+    if cached(path, offline, force):
+        return json.loads(path.read_text(encoding="utf-8"))
+    if offline:
+        raise RuntimeError(f"--offline was given but {path.name} has not been downloaded yet")
+    url = f"{PIP_URL}/pip?country=all&year={year}&povline={line:g}&fill_gaps=true&format=json"
+    rows = json.loads(http_get(url))
+    if not isinstance(rows, list) or len(rows) < 150 or "headcount" not in rows[0]:
+        raise RuntimeError(f"The World Bank returned something unexpected for the {year} estimate at ${line:g}: {str(rows)[:200]}")
     slim = [{k: r.get(k) for k in KEEP} for r in rows]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(slim, separators=(",", ":")), encoding="utf-8")
@@ -230,11 +252,92 @@ def choose_surveys(rows):
     return {code: r for code, (_, r) in best.items()}
 
 
+def curve(points):
+    """(income level, share below) pairs -> two lists, forced to rise, with the empty bottom and
+    full top trimmed off."""
+    xs, fs, top = [], [], 0.0
+    for x, f in sorted(points):
+        top = max(top, min(1.0, max(0.0, f)))   # shares can only rise with the income level
+        xs.append(x)
+        fs.append(round(top, 5))
+    while len(fs) > 1 and fs[1] == 0:           # drop the empty stretch at the bottom
+        xs.pop(0)
+        fs.pop(0)
+    while len(fs) > 1 and fs[-2] >= 0.99999:    # and the full stretch at the top
+        xs.pop()
+        fs.pop()
+    return xs, fs
+
+
+def curve_median(xs, fs):
+    """The income level half the people live below, read off the curve as the site does
+    (straight lines between points on a log scale of income)."""
+    for i in range(len(fs) - 1):
+        if fs[i] <= 0.5 <= fs[i + 1] and fs[i + 1] > fs[i]:
+            t = (0.5 - fs[i]) / (fs[i + 1] - fs[i])
+            return round(math.exp(math.log(xs[i]) + t * (math.log(xs[i + 1]) - math.log(xs[i]))), 3)
+    return None
+
+
+def lined_up(lineup, lines):
+    """{code: {"row": row, "points": [(line, share)]}} from the same-year estimates. National
+    figures, or urban ones where that is all there is (Argentina), as the World Bank does itself."""
+    out = {}
+    for level in ("national", "urban"):
+        for line in lines:
+            for r in lineup.get(line, []):
+                code = r["country_code"]
+                if r.get("reporting_level") != level or not isinstance(r.get("headcount"), (int, float)):
+                    continue
+                if code in out and out[code]["level"] != level:
+                    continue
+                entry = out.setdefault(code, {"row": r, "points": [], "level": level})
+                entry["points"].append((line, float(r["headcount"])))
+    return out
+
+
+def histories(by_line, chosen, lines):
+    """Every survey comparable with the one shown: same coverage (national or urban) and the same
+    measure (income or spending). Compact rows: [year, median, first line index, [shares...]]."""
+    grid = {line: i for i, line in enumerate(lines)}
+    keep = {code: (r.get("reporting_level"), r.get("welfare_type")) for code, r in chosen.items()}
+    found = {}
+    for line in lines:
+        for r in by_line[line]:
+            code = r["country_code"]
+            if code not in keep or r.get("is_interpolated") or not isinstance(r.get("headcount"), (int, float)):
+                continue
+            if (r.get("reporting_level"), r.get("welfare_type")) != keep[code]:
+                continue
+            year = int(r["reporting_year"])
+            entry = found.setdefault(code, {}).setdefault(year, {"row": r, "points": []})
+            entry["points"].append((line, float(r["headcount"])))
+    out = {}
+    for code, years in found.items():
+        rows = []
+        for year, entry in sorted(years.items()):
+            if len(entry["points"]) < len(lines) // 2:
+                continue
+            xs, fs = curve(entry["points"])
+            med = curve_median(xs, fs)
+            if med is None:
+                continue
+            first = grid[xs[0]]
+            shares = [None] * (grid[xs[-1]] - first + 1)
+            for x, f in zip(xs, fs):
+                shares[grid[x] - first] = round(f, 4)
+            comp = entry["row"].get("survey_comparability")
+            rows.append([year, med, first, shares, comp if isinstance(comp, (int, float)) else None])
+        if len(rows) >= 2:
+            out[code] = rows
+    return out
+
+
 def survey_key(r):
     return (r["country_code"], int(r["reporting_year"]), r.get("reporting_level"), r.get("welfare_type"))
 
 
-def build(by_line, release, ppp_year, cpi, deflators, ppp_table, rates):
+def build(by_line, release, ppp_year, cpi, deflators, ppp_table, rates, lineup, lineup_year):
     price_year = datetime.date.today().year
     lines = sorted(by_line)
     middle = by_line[lines[len(lines) // 2]]
@@ -251,23 +354,33 @@ def build(by_line, release, ppp_year, cpi, deflators, ppp_table, rates):
     if not us_inflation:
         raise RuntimeError("No US inflation figures, so nothing can be priced in today's dollars")
 
+    # Same-year estimates. Economies the site doesn't list still count toward the world figure.
+    estimates, others = {}, []
+    for code, entry in sorted(lined_up(lineup, lines).items()):
+        if len(entry["points"]) < len(lines) // 2:
+            continue
+        xs, fs = curve(entry["points"])
+        row = entry["row"]
+        est = {"y": lineup_year, "x": xs, "F": fs, "med": curve_median(xs, fs),
+               "avg": round(float(row["mean"]), 3) if isinstance(row.get("mean"), (int, float)) else None,
+               "p": round(row["reporting_pop"]) if isinstance(row.get("reporting_pop"), (int, float)) else None,
+               "t": "survey" if row.get("estimation_type") == "survey" else
+                    "extrapolated" if row.get("estimation_type") == "extrapolation" else
+                    "interpolated" if row.get("estimation_type") == "interpolation" else "modelled"}
+        if est["med"] is None or not est["p"]:
+            continue
+        if code in chosen:
+            estimates[code] = est
+        else:
+            others.append(dict(est, c=code, n=row.get("country_name") or code))
+
     countries, problems, methods = [], [], {}
     for code, r in sorted(chosen.items()):
         points = sorted(shares.get(survey_key(r), {}).items())
         if len(points) < len(lines) // 2:
             problems.append(f"{code}: skipped, only {len(points)} of {len(lines)} income levels came back")
             continue
-        xs, fs, top = [], [], 0.0
-        for x, f in points:
-            top = max(top, min(1.0, max(0.0, f)))   # shares can only rise with the income level
-            xs.append(x)
-            fs.append(round(top, 5))
-        while len(fs) > 1 and fs[1] == 0:           # drop the empty stretch at the bottom
-            xs.pop(0)
-            fs.pop(0)
-        while len(fs) > 1 and fs[-2] >= 0.99999:    # and the full stretch at the top
-            xs.pop()
-            fs.pop()
+        xs, fs = curve(points)
 
         if code in COUNTRIES:
             name, continent, currency = COUNTRIES[code]
@@ -284,8 +397,9 @@ def build(by_line, release, ppp_year, cpi, deflators, ppp_table, rates):
             kind = "GDP deflator" if method == "GDP deflator" else "consumer prices"
             methods[kind] = methods.get(kind, 0) + 1
         deciles = [r.get(f"decile{i}") for i in range(1, 11)]
+        est = estimates.get(code)
         countries.append({
-            "c": code, "n": name, "g": continent,
+            "c": code, "c2": ISO2.get(code), "n": name, "g": continent,
             "y": int(r["reporting_year"]),
             "w": r.get("welfare_type"),
             "u": r.get("reporting_level") == "urban",
@@ -298,7 +412,10 @@ def build(by_line, release, ppp_year, cpi, deflators, ppp_table, rates):
             "gini": round(float(r["gini"]), 3) if r.get("gini") is not None else None,
             "ds": [round(d * 100, 2) for d in deciles] if all(isinstance(d, (int, float)) for d in deciles) else None,
             "x": xs, "F": fs,
+            "e": est,
         })
+        if est is None:
+            problems.append(f"{name} ({code}): no {lineup_year} estimate")
 
     meta = {
         "source": "World Bank Poverty and Inequality Platform",
@@ -310,8 +427,10 @@ def build(by_line, release, ppp_year, cpi, deflators, ppp_table, rates):
                             if methods.get("consumer prices", 0) >= methods.get("GDP deflator", 0)
                             else "IMF GDP deflator"),
         "generated": today(),
+        "estimateYear": lineup_year if estimates else None,
     }
-    return {"meta": meta, "countries": countries}, problems, methods
+    payload = {"meta": meta, "countries": countries, "others": others}
+    return payload, histories(by_line, chosen, lines), problems, methods
 
 
 def check(payload):
@@ -327,6 +446,9 @@ def check(payload):
     priced = sum(1 for c in countries if c["cur"])
     if priced < len(countries) * 0.75:
         raise RuntimeError(f"Only {priced} of {len(countries)} countries could be priced in today's money")
+    for e in [c["e"] for c in countries if c.get("e")] + payload.get("others", []):
+        if any(b < a for a, b in zip(e["F"], e["F"][1:])) or not (0 < e["med"] < 1000):
+            raise RuntimeError(f"{e.get('n') or 'an estimate'}: estimated income distribution looks wrong")
 
 
 def main():
@@ -368,6 +490,25 @@ def main():
     if len(by_line) < len(LINES) * 2 // 3:
         raise RuntimeError(f"Only {len(by_line)} of {len(LINES)} income levels could be downloaded from the World Bank")
 
+    log(f"     same-year estimates for {datetime.date.today().year - 1}")
+    lineup_year, lineup = datetime.date.today().year - 1, {}
+
+    def one_lineup(line):
+        try:
+            return line, fetch_lineup(line, lineup_year, args.offline, args.force), None
+        except Exception as err:
+            return line, None, err
+
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        for line, rows, err in pool.map(one_lineup, sorted(by_line)):
+            if err is None:
+                lineup[line] = rows
+    if len(lineup) < len(by_line) * 2 // 3:
+        log(f"     only {len(lineup)} of {len(by_line)} income levels came back; the site will show surveys only")
+        lineup = {}
+    else:
+        log(f"     {len(lineup)} of {len(by_line)} income levels")
+
     log("2/4  Prices: inflation since the survey's price year")
     price_year = datetime.date.today().year
     cpi, deflators, ppp_table = {}, {}, {}
@@ -400,10 +541,13 @@ def main():
     log(f"     rates dated {all_rates['date']}")
 
     log("4/4  Putting it together")
-    payload, problems, methods = build(by_line, release, ppp_year, cpi, deflators, ppp_table, all_rates["rates"])
+    payload, history, problems, methods = build(by_line, release, ppp_year, cpi, deflators, ppp_table,
+                                                all_rates["rates"], lineup, lineup_year)
     check(payload)
     write_js(DATA_DIR / "countries.js", "GIL_DATA", payload,
              "Generated by scripts/update_data.py. Do not edit by hand; run the script again instead.")
+    write_js(DATA_DIR / "history.js", "GIL_HISTORY", {"lines": sorted(by_line), "c": history},
+             "Generated by scripts/update_data.py. Every comparable survey per country; loaded only when needed.")
     if not args.offline:
         update_rates.write_rates(all_rates)
 
@@ -414,6 +558,8 @@ def main():
         f"Wrote data/countries.js: {len(countries)} countries, edition {release}, {ppp_year} prices.",
         f"Survey years run {years[0]} to {years[-1]}; half are from {years[len(years) // 2]} or later.",
         f"{priced} countries can be shown in today's US dollars and their own currency; {len(countries) - priced} stay price-adjusted only.",
+        f"{sum(1 for c in countries if c.get('e'))} countries have a {lineup_year} estimate, plus {len(payload['others'])} more economies "
+        f"that count only toward the world figure. History: {len(history)} countries with two or more comparable surveys.",
         "Inflation came from: " + ", ".join(f"{k} ({v} countries)" for k, v in sorted(methods.items())) + ".",
     ]
     if problems:

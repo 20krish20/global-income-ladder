@@ -30,6 +30,11 @@ def main():
     flags = {f.stem.upper(): "data:image/svg+xml;base64," + base64.b64encode(f.read_bytes()).decode("ascii")
              for f in sorted((ROOT / "flags").glob("*.svg"))}
     scripts = [f"<script>window.GIL_FLAGS = {json.dumps(flags, separators=(',', ':'))};</script>"]
+    # Earlier surveys normally load on demand from data/history.js; here they ride along too.
+    history = (ROOT / "data/history.js").read_text(encoding="utf-8")
+    if "</script" in history.lower():
+        raise SystemExit("data/history.js contains a closing script tag and cannot be inlined")
+    scripts.append(f"<script>\n{history}</script>")
     for src in re.findall(r'<script src="([^"]+)"></script>', html):
         code = (ROOT / src).read_text(encoding="utf-8")
         if "</script" in code.lower():
